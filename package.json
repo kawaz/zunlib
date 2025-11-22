@@ -10,14 +10,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./debounce": {
-      "types": "./dist/debounce.d.ts",
-      "import": "./dist/debounce.js"
-    },
-    "./throttle": {
-      "types": "./dist/throttle.d.ts",
-      "import": "./dist/throttle.js"
     }
   },
   "files": [
@@ -28,9 +20,9 @@
   "scripts": {
     "build": "bun run build:types && bun run build:js",
     "build:types": "tsc --project tsconfig.build.json",
-    "build:js": "bun build ./src/index.ts ./src/debounce.ts ./src/throttle.ts --outdir ./dist --format esm --splitting",
-    "lint": "oxlint",
-    "format": "oxlint --fix",
+    "build:js": "bun build ./src/index.ts --outdir ./dist --format esm --sourcemap=external",
+    "lint": "oxlint && biome check src/",
+    "format": "oxlint --fix && biome check --write src/",
     "test": "bun test",
     "prepublishOnly": "bun run build"
   },
@@ -54,6 +46,7 @@
   },
   "homepage": "https://github.com/kawaz/zunlib#readme",
   "devDependencies": {
+    "@biomejs/biome": "^2.3.7",
     "@types/bun": "latest",
     "oxlint": "latest",
     "typescript": "^5"

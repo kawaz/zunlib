@@ -1,61 +1,68 @@
 # zunlib
 
-A collection of small utility functions and types for JavaScript/TypeScript.
+JavaScript/TypeScript向けの小さなユーティリティ関数・型のコレクション。
 
-## Project Overview
+## プロジェクト概要
 
-This is `@kawaz/zunlib` - a personal utility library consolidating small, independent functions that were originally stored as gists.
+`@kawaz/zunlib` - 元々gistにメモ代わりに保存していた独立した小さな関数群をまとめた個人用ユーティリティライブラリ。
 
-## Development Guidelines
+## 開発ガイドライン
 
-### Package Manager
-- Use **bun** exclusively
-- `bun install` for dependencies
-- `bun test` for testing
-- `bun run build` for building
+### パッケージマネージャ
+- **bun** を使用
+- `bun install` - 依存関係インストール
+- `bun test` - テスト実行
+- `bun run build` - ビルド
 
-### Tooling
+### ツール
 - **Linter/Formatter**: oxlint (`bun run lint`, `bun run format`)
-- **Bundler**: bun build (with tree-shaking support)
-- **TypeScript**: Strict mode enabled
+- **Bundler**: bun build (tree-shaking対応)
+- **TypeScript**: strictモード有効
 
-### Code Structure
-- Each utility lives in its own file: `src/{utility}.ts`
-- All exports aggregated in `src/index.ts`
-- Tests alongside source: `src/{utility}.test.ts`
-- Keep utilities independent - no cross-dependencies between utilities
+### コード構成
+- 各ユーティリティは独自ファイル: `src/{utility}.ts`
+- 全exportを `src/index.ts` に集約
+- テストはソースと同階層: `src/{utility}.test.ts`
+- ユーティリティ間の依存禁止(原則) - 各機能は独立させる
+  - 大→小の依存は許容（tree-shakingで必要分だけ残る）
+  - 小→大の依存は禁止（不要なコードがバンドルされる）
 
-### Adding New Utilities
-1. Create `src/{name}.ts` with the implementation
-2. Create `src/{name}.test.ts` with tests
-3. Export from `src/index.ts`
-4. Add to `package.json` exports if standalone import is desired
-5. Update build script to include the new entry point
+### 新規ユーティリティの追加手順
+1. `src/{name}.ts` に実装を作成
+2. `src/{name}.test.ts` にテストを作成
+3. `src/index.ts` からexport
+4. 単独importが必要なら `package.json` の exports に追加
+5. ビルドスクリプトに新エントリポイントを追加
 
-### Design Principles
-- Self-contained: Each utility should work independently
-- Tree-shakeable: No side effects, proper ESM exports
-- TypeScript-first: Full type safety with exported types
-- Minimal: Only include what's needed, no over-engineering
+### 設計原則
+- 自己完結: 各ユーティリティは独立して動作
+- Tree-shakeable: 副作用なし、適切なESM exports
+- TypeScript-first: 型安全、型のexport
+- 最小限: 必要なものだけ、過剰な設計をしない
 
-### npm Publishing
-- Package name: `@kawaz/zunlib`
-- Auto-publish on main branch push when version changes
-- Requires `NPM_TOKEN` secret in GitHub
+### npm公開
+- パッケージ名: `@kawaz/zunlib`
+- mainブランチpush時にversion変更があれば自動publish
+- GitHubに `NPM_TOKEN` シークレットが必要
 
-### Commands
+### コマンド
 ```bash
-bun install      # Install dependencies
-bun run lint     # Run linter
-bun run format   # Format code
-bun test         # Run tests
-bun run build    # Build for production
+bun install      # 依存関係インストール
+bun run lint     # Linter実行
+bun run format   # コード整形
+bun test         # テスト実行
+bun run build    # プロダクションビルド
 ```
 
-## Planned Utilities
-- debounce - Debounce function calls
-- throttle - Throttle function calls
-- binconv - Binary conversion utilities
-- worker - Web Worker helpers
-- duckdb - DuckDB utilities
-- datetime - Date/time utilities
+## 予定ユーティリティ
+- debounce - 関数呼び出しのデバウンス
+- throttle - 関数呼び出しのスロットル
+- binconv - バイナリ変換ユーティリティ
+- worker - Web Workerヘルパー
+- duckdb - DuckDBユーティリティ
+- datetime - 日付/時刻ユーティリティ
+
+## 言語ルール
+- CLAUDE.md等のドキュメント類はREADME以外は日本語
+- 会話も日本語
+- TSDocは英語
