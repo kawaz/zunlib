@@ -1,0 +1,61 @@
+{
+  "name": "@kawaz/zunlib",
+  "version": "0.0.1",
+  "description": "A collection of small utility functions and types for JavaScript/TypeScript",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./debounce": {
+      "types": "./dist/debounce.d.ts",
+      "import": "./dist/debounce.js"
+    },
+    "./throttle": {
+      "types": "./dist/throttle.d.ts",
+      "import": "./dist/throttle.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "bun run build:types && bun run build:js",
+    "build:types": "tsc --project tsconfig.build.json",
+    "build:js": "bun build ./src/index.ts ./src/debounce.ts ./src/throttle.ts --outdir ./dist --format esm --splitting",
+    "lint": "oxlint",
+    "format": "oxlint --fix",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
+  },
+  "keywords": [
+    "utilities",
+    "debounce",
+    "throttle",
+    "binconv",
+    "datetime",
+    "worker",
+    "duckdb"
+  ],
+  "author": "kawaz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kawaz/zunlib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kawaz/zunlib/issues"
+  },
+  "homepage": "https://github.com/kawaz/zunlib#readme",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxlint": "latest",
+    "typescript": "^5"
+  }
+}
