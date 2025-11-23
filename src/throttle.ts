@@ -90,6 +90,7 @@ export function throttle<T extends (...args: any[]) => any>(
           timeoutId = setTimeout(() => {
             if (signal?.aborted) return;
             if (lastArgs !== null) {
+              lastCallTime = Date.now();
               f(...lastArgs);
               lastArgs = null;
             }

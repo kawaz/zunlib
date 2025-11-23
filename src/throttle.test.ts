@@ -185,6 +185,34 @@ describe("throttle", () => {
       await new Promise((r) => setTimeout(r, 60));
       expect(callCount).toBe(0);
     });
+
+    test("leading: falseで連続呼び出し後も正しいインターバルが維持される", async () => {
+      const calls: number[] = [];
+      const startTime = Date.now();
+      const throttled = throttle(
+        () => calls.push(Date.now() - startTime),
+        { interval: 50, leading: false },
+      );
+
+      // 最初の呼び出し (50ms後に実行予定)
+      throttled();
+
+      // 60ms待機 (1回目実行済み)
+      await new Promise((r) => setTimeout(r, 60));
+      expect(calls.length).toBe(1);
+
+      // 2回目の呼び出し (即座にインターバル経過しているので50ms後に実行)
+      throttled();
+
+      // 60ms待機 (2回目実行済み)
+      await new Promise((r) => setTimeout(r, 60));
+      expect(calls.length).toBe(2);
+
+      // 2回目の実行が1回目から適切な間隔で行われているか確認
+      // (lastCallTimeが正しく更新されていないと間隔がおかしくなる)
+      // タイマーの誤差を考慮して少し緩めに判定
+      expect(calls[1]! - calls[0]!).toBeGreaterThanOrEqual(45);
+    });
   });
 
   describe("AbortSignal対応", () => {
