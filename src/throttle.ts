@@ -1,4 +1,4 @@
-import { toGetter, type ValueOrGetter } from "./valueOrGetter";
+import { toDynamic, type ValueOrGetter } from "./valueOrGetter";
 
 /**
  * A throttled function with additional methods
@@ -50,14 +50,9 @@ export function throttle<T extends (...args: any[]) => any>(
   opts = typeof opts === "object" ? opts : { interval: opts };
   const signal = opts?.signal;
 
-  let interval = opts.interval;
-  let intervalFn = toGetter(interval);
-
-  let leading = opts.leading ?? true;
-  let leadingFn = toGetter(leading);
-
-  let trailing = opts.trailing ?? true;
-  let trailingFn = toGetter(trailing);
+  const interval = toDynamic(opts.interval);
+  const leading = toDynamic(opts.leading ?? true);
+  const trailing = toDynamic(opts.trailing ?? true);
 
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let lastArgs: Parameters<T> | null = null;
@@ -78,9 +73,9 @@ export function throttle<T extends (...args: any[]) => any>(
 
     const now = Date.now();
     const elapsed = now - lastCallTime;
-    const currentInterval = intervalFn();
-    const shouldLead = leadingFn();
-    const shouldTrail = trailingFn();
+    const currentInterval = interval.get();
+    const shouldLead = leading.get();
+    const shouldTrail = trailing.get();
 
     if (elapsed >= currentInterval) {
       // 十分な時間が経過した
@@ -121,35 +116,9 @@ export function throttle<T extends (...args: any[]) => any>(
     }
   };
 
-  Object.defineProperty(throttled, "interval", {
-    get: () => interval,
-    set: (newInterval) => {
-      interval = newInterval;
-      intervalFn = toGetter(newInterval);
-    },
-    enumerable: true,
-    configurable: true,
-  });
-
-  Object.defineProperty(throttled, "leading", {
-    get: () => leading,
-    set: (newLeading) => {
-      leading = newLeading;
-      leadingFn = toGetter(newLeading);
-    },
-    enumerable: true,
-    configurable: true,
-  });
-
-  Object.defineProperty(throttled, "trailing", {
-    get: () => trailing,
-    set: (newTrailing) => {
-      trailing = newTrailing;
-      trailingFn = toGetter(newTrailing);
-    },
-    enumerable: true,
-    configurable: true,
-  });
+  interval.bindTo(throttled, "interval");
+  leading.bindTo(throttled, "leading");
+  trailing.bindTo(throttled, "trailing");
 
   return Object.assign(throttled, {
     cancel,

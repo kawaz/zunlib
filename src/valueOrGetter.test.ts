@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { toGetter, toValue, type ValueOrGetter } from "./valueOrGetter";
+import {
+  toDynamic,
+  toGetter,
+  toValue,
+  type ValueOrGetter,
+} from "./valueOrGetter";
 
 describe("toValue", () => {
   test("値がそのまま返される", () => {
@@ -56,5 +61,100 @@ describe("ValueOrGetter型", () => {
     const values: ValueOrGetter<number>[] = [100, () => 200];
     expect(toValue(values[0]!)).toBe(100);
     expect(toValue(values[1]!)).toBe(200);
+  });
+});
+
+describe("toDynamic", () => {
+  test("get()で値を取得できる", () => {
+    const dv = toDynamic(100);
+    expect(dv.get()).toBe(100);
+  });
+
+  test("sourceで元の値を取得できる", () => {
+    const dv = toDynamic(100);
+    expect(dv.source).toBe(100);
+  });
+
+  test("関数を渡した場合get()は評価された値を返す", () => {
+    let value = 100;
+    const dv = toDynamic(() => value);
+
+    expect(dv.get()).toBe(100);
+
+    value = 200;
+    expect(dv.get()).toBe(200);
+  });
+
+  test("関数を渡した場合sourceは関数を返す", () => {
+    const fn = () => 100;
+    const dv = toDynamic(fn);
+    expect(dv.source).toBe(fn);
+  });
+
+  test("set()で値を更新できる", () => {
+    const dv = toDynamic(100);
+
+    dv.set(200);
+    expect(dv.get()).toBe(200);
+    expect(dv.source).toBe(200);
+  });
+
+  test("set()で関数を設定できる", () => {
+    const dv = toDynamic(100 as ValueOrGetter<number>);
+    let value = 200;
+    const fn = () => value;
+
+    dv.set(fn);
+    expect(dv.get()).toBe(200);
+    expect(dv.source).toBe(fn);
+
+    value = 300;
+    expect(dv.get()).toBe(300);
+  });
+
+  test("bindToでオブジェクトにプロパティを定義できる", () => {
+    const dv = toDynamic(100);
+    const obj: { delay?: ValueOrGetter<number> } = {};
+
+    dv.bindTo(obj, "delay");
+
+    expect(obj.delay).toBe(100);
+  });
+
+  test("bindTo後もget()で値を取得できる", () => {
+    const dv = toDynamic(100);
+    const obj: { delay?: ValueOrGetter<number> } = {};
+
+    dv.bindTo(obj, "delay");
+
+    expect(dv.get()).toBe(100);
+  });
+
+  test("bindTo後にプロパティを更新するとget()も更新される", () => {
+    const dv = toDynamic(100);
+    const obj: { delay?: ValueOrGetter<number> } = {};
+
+    dv.bindTo(obj, "delay");
+
+    obj.delay = 200;
+    expect(obj.delay).toBe(200);
+    expect(dv.get()).toBe(200);
+    expect(dv.source).toBe(200);
+  });
+
+  test("プロパティに関数を設定するとget()はその関数を評価する", () => {
+    const dv = toDynamic(100 as ValueOrGetter<number>);
+    const obj: { delay?: ValueOrGetter<number> } = {};
+
+    dv.bindTo(obj, "delay");
+
+    let value = 200;
+    obj.delay = () => value;
+
+    expect(dv.get()).toBe(200);
+    expect(typeof dv.source).toBe("function");
+
+    value = 300;
+    expect(dv.get()).toBe(300);
   });
 });

@@ -1,4 +1,4 @@
-import { toGetter, type ValueOrGetter } from "./valueOrGetter";
+import { toDynamic, type ValueOrGetter } from "./valueOrGetter";
 
 /**
  * A debounced function with additional methods
@@ -44,16 +44,19 @@ export function debounce<T extends (...args: any[]) => any>(
 ): DebouncedFunction<T> {
   opts = typeof opts === "object" ? opts : { delay: opts };
   const signal = opts?.signal;
-  let delay = opts.delay;
-  let delayFn = toGetter(delay);
+  const delay = toDynamic(opts.delay);
+
   let timeoutId: ReturnType<typeof setTimeout>;
   let pending = () => {};
+
   const cancel = () => clearTimeout(timeoutId);
   const flush = () => {
     cancel();
     pending();
   };
+
   signal?.addEventListener("abort", cancel);
+
   const debounced = (...args: Parameters<T>) => {
     cancel();
     if (signal?.aborted) return;
@@ -61,17 +64,11 @@ export function debounce<T extends (...args: any[]) => any>(
       if (signal?.aborted) return;
       f(...args);
     };
-    timeoutId = setTimeout(pending, delayFn());
+    timeoutId = setTimeout(pending, delay.get());
   };
-  Object.defineProperty(debounced, "delay", {
-    get: () => delay,
-    set: (newDelay) => {
-      delay = newDelay;
-      delayFn = toGetter(newDelay);
-    },
-    enumerable: true,
-    configurable: true,
-  });
+
+  delay.bindTo(debounced, "delay");
+
   return Object.assign(debounced, {
     cancel,
     flush,
