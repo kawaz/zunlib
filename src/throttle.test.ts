@@ -189,10 +189,10 @@ describe("throttle", () => {
     test("leading: falseで連続呼び出し後も正しいインターバルが維持される", async () => {
       const calls: number[] = [];
       const startTime = Date.now();
-      const throttled = throttle(
-        () => calls.push(Date.now() - startTime),
-        { interval: 50, leading: false },
-      );
+      const throttled = throttle(() => calls.push(Date.now() - startTime), {
+        interval: 50,
+        leading: false,
+      });
 
       // 最初の呼び出し (50ms後に実行予定)
       throttled();

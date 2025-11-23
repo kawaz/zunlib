@@ -66,11 +66,7 @@ export type DynamicValue<T> = {
   /** Get the raw ValueOrGetter (value or function) */
   source: ValueOrGetter<T>;
   /** Bind this dynamic value to an object property */
-  bindTo: <O extends object>(
-    obj: O,
-    name: string,
-    options?: BindToOptions,
-  ) => void;
+  bindTo: (obj: object, name: string, options?: BindToOptions) => void;
 };
 
 /**
@@ -114,11 +110,7 @@ export function toDynamic<T>(initial: ValueOrGetter<T>): DynamicValue<T> {
     get source() {
       return source;
     },
-    bindTo: <O extends object>(
-      obj: O,
-      name: string,
-      options: BindToOptions = {},
-    ) => {
+    bindTo: (obj: object, name: string, options: BindToOptions = {}) => {
       const { enumerable = true, configurable = true } = options;
       Object.defineProperty(obj, name, {
         get: () => source,
