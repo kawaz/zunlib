@@ -23,7 +23,7 @@
     "build:js": "bun build ./src/index.ts --outdir ./dist --format esm --sourcemap=external",
     "lint": "oxlint && biome check src/",
     "format": "oxlint --fix && biome check --write src/",
-    "test": "bun test",
+    "test": "bun test --concurrent",
     "prepublishOnly": "bun run build"
   },
   "keywords": [

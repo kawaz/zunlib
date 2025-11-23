@@ -80,7 +80,10 @@ describe("debounce", () => {
   test("delayに関数を渡せる (ValueOrGetter)", async () => {
     let delay = 50;
     let callCount = 0;
-    const debounced = debounce(() => callCount++, () => delay);
+    const debounced = debounce(
+      () => callCount++,
+      () => delay,
+    );
 
     debounced();
     await new Promise((r) => setTimeout(r, 60));
