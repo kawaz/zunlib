@@ -1,6 +1,6 @@
 {
   "name": "@kawaz/zunlib",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A collection of small utility functions and types for JavaScript/TypeScript",
   "type": "module",
   "main": "./dist/index.js",
