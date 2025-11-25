@@ -1,13 +1,11 @@
-import { checkAll } from "./checkAll";
+import { type CondInputType, checkAll } from "./checkAll";
 import {
   type Input,
   type InputArray,
   type InputRecord,
+  type InputType,
   resolveAll,
 } from "./resolveAll";
-
-type CondInputType = Parameters<typeof checkAll>[0];
-type ResolveInputType = Parameters<typeof resolveAll>[0];
 
 /**
  * Options for setSuperInterval
@@ -108,13 +106,16 @@ type PollingOptions = {
  *
  * @param callback - Function to call on each interval
  * @param options - Polling options
- * @returns Object with stop method
+ * @returns Object with stop and abort methods
  *
  * @example
  * ```typescript
- * const { stop } = setPolling(() => {
+ * const { stop, abort } = setPolling(() => {
  *   console.log("polling...");
  * }, { interval: 100, timeout: 5000, immediate: true });
+ *
+ * stop();  // stops polling without calling onabort
+ * abort(); // stops polling and calls onabort with "manual"
  * ```
  */
 export const setPolling = (
@@ -186,7 +187,7 @@ type WaitOptions = {
  * Errors thrown or rejected promises from condition functions are silently
  * swallowed and treated as "not ready", retrying on the next interval.
  *
- * @param condFns - Single condition or array of conditions (all must be true)
+ * @param condFns - Single condition, array of conditions, or object of conditions (all must be true)
  * @param options - Wait options
  * @returns Promise that resolves when all conditions are met
  *
@@ -196,8 +197,14 @@ type WaitOptions = {
  * await waitCond(() => document.readyState === "complete");
  * await waitCond(() => someValue > 10, { timeout: 5000 });
  *
- * // Multiple conditions (all must be true)
+ * // Array of conditions (all must be true)
  * await waitCond([() => isA(), () => isB(), () => isC()]);
+ *
+ * // Object of conditions
+ * await waitCond({
+ *   auth: () => isAuthenticated(),
+ *   ready: () => isReady(),
+ * });
  *
  * // Async condition
  * await waitCond(async () => await checkSomething());
@@ -292,15 +299,15 @@ type WaitValueResultOrNull<T> = WaitValueResult<T> | null;
  * const el = await waitValue(() => el, { nothrow: true });
  * ```
  */
-export function waitValue<T extends ResolveInputType>(
+export function waitValue<T extends InputType>(
   getters: T,
   options: WaitOptions & { nothrow: true },
 ): Promise<WaitValueResultOrNull<T>>;
-export function waitValue<T extends ResolveInputType>(
+export function waitValue<T extends InputType>(
   getters: T,
   options?: WaitOptions,
 ): Promise<WaitValueResult<T>>;
-export function waitValue<T extends ResolveInputType>(
+export function waitValue<T extends InputType>(
   getters: T,
   options: WaitOptions = {},
 ): Promise<WaitValueResult<T> | null> {

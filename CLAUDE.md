@@ -54,9 +54,16 @@ bun test         # テスト実行
 bun run build    # プロダクションビルド
 ```
 
-## 予定ユーティリティ
+## 実装済みユーティリティ
+- checkAll - 複数条件の同時チェック
 - debounce - 関数呼び出しのデバウンス
+- matcher - キーワード/パターンマッチャー
+- resolveAll - 複数getter/Promiseの同時解決
 - throttle - 関数呼び出しのスロットル
+- valueOrGetter - 値またはgetter関数の統一的な扱い
+- wait - ポーリング・条件待ち・値待ちユーティリティ
+
+## 予定ユーティリティ
 - binconv - バイナリ変換ユーティリティ
 - worker - Web Workerヘルパー
 - duckdb - DuckDBユーティリティ
@@ -66,3 +73,15 @@ bun run build    # プロダクションビルド
 - CLAUDE.md等のドキュメント類はREADME以外は日本語
 - 会話も日本語
 - TSDocは英語
+
+## コードレビューチェックリスト
+コミット前、push前、作業の区切りで以下を確認:
+- 型エラー: `tsc --noEmit`
+- Lint: `bun run lint`
+- テスト: `bun test`
+- TSDocと実装の整合性
+- ネーミングの妥当性
+- 設計原則の遵守（依存方向、シンプル化、無駄なコード）
+- セキュリティ観点（入力検証、eval使用、依存関係）
+- CLAUDE.md/READMEとの整合性
+- Markdown の ** の強調表示はあまり好きじゃない

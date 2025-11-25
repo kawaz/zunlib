@@ -89,6 +89,16 @@ export function resolveAll<T extends InputRecord>(
   options: { settled?: boolean; nothrow: true },
 ): Promise<{ [K in keyof T]: ResolvedInput<T[K]> } | null>;
 
+// Overloads for union type (for internal use like waitValue)
+export function resolveAll(
+  inputs: InputType,
+  options?: { settled?: boolean; nothrow?: false },
+): Promise<unknown>;
+export function resolveAll(
+  inputs: InputType,
+  options: { settled?: boolean; nothrow: true },
+): Promise<unknown | null>;
+
 /**
  * Resolves multiple inputs (getters or Promises) simultaneously
  *

@@ -40,6 +40,14 @@ describe("waitCond", () => {
     );
   });
 
+  test("すでにabortされたsignal + nothrow: trueは即座に解決", async () => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await waitCond(() => false, { signal: controller.signal, nothrow: true });
+    // rejectしなければOK
+  });
+
   test("nothrowオプションでtimeout時にrejectせず解決する", async () => {
     await waitCond(() => false, {
       timeout: 50,
@@ -617,5 +625,43 @@ describe("setPolling", () => {
 
     await new Promise((r) => setTimeout(r, 50));
     expect(count).toBe(0);
+  });
+
+  test("abort()でonabortが'manual'で呼ばれる", async () => {
+    let abortReason: string | undefined;
+    let count = 0;
+    const { abort } = setPolling(() => count++, {
+      interval: 20,
+      timeout: 1000,
+      onabort: (reason) => {
+        abortReason = reason;
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+    abort();
+    const countAtAbort = count;
+
+    expect(abortReason).toBe("manual");
+
+    // abort後はコールバックが呼ばれない
+    await new Promise((r) => setTimeout(r, 50));
+    expect(count).toBe(countAtAbort);
+  });
+
+  test("abort()を複数回呼んでもonabortは1回だけ", async () => {
+    let abortCount = 0;
+    const { abort } = setPolling(() => {}, {
+      interval: 20,
+      onabort: () => {
+        abortCount++;
+      },
+    });
+
+    abort();
+    abort();
+    abort();
+
+    expect(abortCount).toBe(1);
   });
 });

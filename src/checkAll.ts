@@ -67,6 +67,16 @@ export function checkAll<T extends CondInputRecord>(
   options: { settled?: boolean; nothrow: true },
 ): Promise<boolean>;
 
+// Overloads for union type (for internal use like waitCond)
+export function checkAll(
+  inputs: CondInputType,
+  options?: { settled?: boolean; nothrow?: false },
+): Promise<true>;
+export function checkAll(
+  inputs: CondInputType,
+  options: { settled?: boolean; nothrow: true },
+): Promise<boolean>;
+
 /**
  * Checks multiple conditions simultaneously
  *

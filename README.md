@@ -10,10 +10,18 @@ bun add @kawaz/zunlib
 npm install @kawaz/zunlib
 ```
 
+## Utilities
+
+- checkAll - Check multiple conditions simultaneously
+- debounce - Debounce function calls
+- matcher - Keyword/pattern matcher with wildcard support
+- resolveAll - Resolve multiple getters/Promises simultaneously
+- throttle - Throttle function calls
+- valueOrGetter - Unified handling of values or getter functions
+- wait - Polling, condition waiting, and value waiting utilities
+
 ## Planned Utilities
 
-- debounce - Debounce function calls
-- throttle - Throttle function calls
 - binconv - Binary conversion utilities
 - worker - Web Worker helpers
 - duckdb - DuckDB utilities
