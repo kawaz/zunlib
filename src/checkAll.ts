@@ -1,12 +1,13 @@
+import type { MaybePromise } from "./resolveAll";
+
 /**
  * Input type that accepts condition functions or Promises
  */
-type MaybePromise<T> = T | Promise<T>;
-type CondInput = (() => MaybePromise<boolean>) | Promise<boolean>;
+export type CondInput = (() => MaybePromise<boolean>) | Promise<boolean>;
 
-type CondInputArray = readonly CondInput[];
-type CondInputRecord = Record<string, CondInput>;
-type CondInputType = CondInput | CondInputArray | CondInputRecord;
+export type CondInputArray = readonly CondInput[];
+export type CondInputRecord = Record<string, CondInput>;
+export type CondInputType = CondInput | CondInputArray | CondInputRecord;
 
 /**
  * Settled result type based on input shape

@@ -1,12 +1,12 @@
 /**
  * Input type that accepts getter functions or Promises
  */
-type MaybePromise<T> = T | Promise<T>;
-type Input<T> = (() => MaybePromise<T>) | Promise<T>;
+export type MaybePromise<T> = T | Promise<T>;
+export type Input<T> = (() => MaybePromise<T>) | Promise<T>;
 
-type InputArray = readonly Input<unknown>[];
-type InputRecord = Record<string, Input<unknown>>;
-type InputType = Input<unknown> | InputArray | InputRecord;
+export type InputArray = readonly Input<unknown>[];
+export type InputRecord = Record<string, Input<unknown>>;
+export type InputType = Input<unknown> | InputArray | InputRecord;
 
 /**
  * Extract the resolved type from an Input

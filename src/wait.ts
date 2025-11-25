@@ -1,3 +1,14 @@
+import { checkAll } from "./checkAll";
+import {
+  type Input,
+  type InputArray,
+  type InputRecord,
+  resolveAll,
+} from "./resolveAll";
+
+type CondInputType = Parameters<typeof checkAll>[0];
+type ResolveInputType = Parameters<typeof resolveAll>[0];
+
 /**
  * Options for setSuperInterval
  */
@@ -169,9 +180,6 @@ type WaitOptions = {
   nothrow?: boolean;
 };
 
-type CondFn = () => boolean | Promise<boolean>;
-type CondInput = CondFn | readonly CondFn[];
-
 /**
  * Waits until condition function(s) return true
  *
@@ -199,23 +207,10 @@ type CondInput = CondFn | readonly CondFn[];
  * ```
  */
 export const waitCond = (
-  condFns: CondInput,
+  condFns: CondInputType,
   options: WaitOptions = {},
 ): Promise<void> => {
   const { interval = 100, timeout, signal, nothrow } = options;
-
-  // Normalize to array
-  const fns = typeof condFns === "function" ? [condFns] : condFns;
-
-  // Check if all conditions are met (async, swallows errors as "not ready")
-  const checkAll = async () => {
-    try {
-      const results = await Promise.all(fns.map((fn) => fn()));
-      return results.every(Boolean);
-    } catch {
-      return false;
-    }
-  };
 
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
@@ -232,7 +227,8 @@ export const waitCond = (
       if (checking) return;
       checking = true;
       try {
-        if (await checkAll()) {
+        // checkAll with nothrow swallows errors and returns false
+        if (await checkAll(condFns, { nothrow: true })) {
           stop();
           resolve();
         }
@@ -253,27 +249,17 @@ export const waitCond = (
   });
 };
 
-type MaybePromise<T> = T | Promise<T>;
-type Getter<T> = () => MaybePromise<T | null | undefined>;
-type GetterArray = readonly Getter<unknown>[];
-type GetterRecord = Record<string, Getter<unknown>>;
-type GetterInput = Getter<unknown> | GetterArray | GetterRecord;
-
-type WaitValueResult<T> = T extends Getter<infer U>
-  ? U
-  : T extends readonly Getter<unknown>[]
-    ? { [K in keyof T]: T[K] extends Getter<infer V> ? V : never }
-    : T extends Record<string, Getter<unknown>>
-      ? { [K in keyof T]: T[K] extends Getter<infer V> ? V : never }
+type WaitValueResult<T> = T extends Input<infer U>
+  ? NonNullable<U>
+  : T extends readonly Input<unknown>[]
+    ? { [K in keyof T]: T[K] extends Input<infer V> ? NonNullable<V> : never }
+    : T extends Record<string, Input<unknown>>
+      ? {
+          [K in keyof T]: T[K] extends Input<infer V> ? NonNullable<V> : never;
+        }
       : never;
 
-type WaitValueResultOrNull<T> = T extends Getter<infer U>
-  ? U | null
-  : T extends readonly Getter<unknown>[]
-    ? { [K in keyof T]: T[K] extends Getter<infer V> ? V : never } | null
-    : T extends Record<string, Getter<unknown>>
-      ? { [K in keyof T]: T[K] extends Getter<infer V> ? V : never } | null
-      : never;
+type WaitValueResultOrNull<T> = WaitValueResult<T> | null;
 
 /**
  * Waits until getter(s) return non-null/undefined value(s)
@@ -306,50 +292,39 @@ type WaitValueResultOrNull<T> = T extends Getter<infer U>
  * const el = await waitValue(() => el, { nothrow: true });
  * ```
  */
-export function waitValue<T extends GetterInput>(
+export function waitValue<T extends ResolveInputType>(
   getters: T,
   options: WaitOptions & { nothrow: true },
 ): Promise<WaitValueResultOrNull<T>>;
-export function waitValue<T extends GetterInput>(
+export function waitValue<T extends ResolveInputType>(
   getters: T,
   options?: WaitOptions,
 ): Promise<WaitValueResult<T>>;
-export function waitValue<T extends GetterInput>(
+export function waitValue<T extends ResolveInputType>(
   getters: T,
   options: WaitOptions = {},
 ): Promise<WaitValueResult<T> | null> {
   const { interval = 100, timeout, signal, nothrow } = options;
 
-  // Normalize to object form
-  const isFunction = typeof getters === "function";
+  // Normalize to object form for resolveAll
+  const isFunction =
+    typeof getters === "function" || getters instanceof Promise;
   const isArray = Array.isArray(getters);
-  const normalized: GetterRecord = isFunction
-    ? { result: getters }
+  const normalized: InputRecord = isFunction
+    ? { result: getters as Input<unknown> }
     : isArray
-      ? Object.fromEntries(getters.map((g, i) => [i, g]))
-      : (getters as GetterRecord);
+      ? Object.fromEntries((getters as InputArray).map((g, i) => [i, g]))
+      : (getters as InputRecord);
   const keys = Object.keys(normalized);
 
-  // Get result extractor
-  const getResult = (results: Record<string, unknown>) => {
+  // Build result in original shape
+  const buildResult = (
+    results: Record<string, unknown>,
+  ): WaitValueResult<T> => {
     if (isFunction) return results.result as WaitValueResult<T>;
-    if (isArray) return keys.map((k) => results[k]) as WaitValueResult<T>;
+    if (isArray)
+      return keys.map((k) => results[k]) as unknown as WaitValueResult<T>;
     return results as WaitValueResult<T>;
-  };
-
-  // Check if all values are ready (async, swallows errors as "not ready")
-  const tryGetAll = async (): Promise<Record<string, unknown> | null> => {
-    try {
-      const results: Record<string, unknown> = {};
-      for (const key of keys) {
-        const value = await normalized[key]?.();
-        if (value == null) return null;
-        results[key] = value;
-      }
-      return results;
-    } catch {
-      return null;
-    }
   };
 
   return new Promise((resolve, reject) => {
@@ -367,10 +342,14 @@ export function waitValue<T extends GetterInput>(
       if (checking) return;
       checking = true;
       try {
-        const results = await tryGetAll();
-        if (results) {
+        // resolveAll with nothrow swallows errors and returns null
+        const results = await resolveAll(normalized, { nothrow: true });
+        if (results === null) return;
+        // Check all values are non-null/undefined
+        const values = Object.values(results);
+        if (values.every((v) => v != null)) {
           stop();
-          resolve(getResult(results));
+          resolve(buildResult(results));
         }
       } finally {
         checking = false;
