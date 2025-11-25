@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  bindTo,
   toDynamic,
   toGetter,
   toValue,
@@ -112,7 +113,7 @@ describe("toDynamic", () => {
     expect(dv.get()).toBe(300);
   });
 
-  test("bindToでオブジェクトにプロパティを定義できる", () => {
+  test("メソッドbindToでオブジェクトにプロパティを定義できる", () => {
     const dv = toDynamic(100);
     const obj: { delay?: ValueOrGetter<number> } = {};
 
@@ -121,7 +122,7 @@ describe("toDynamic", () => {
     expect(obj.delay).toBe(100);
   });
 
-  test("bindTo後もget()で値を取得できる", () => {
+  test("メソッドbindTo後もget()で値を取得できる", () => {
     const dv = toDynamic(100);
     const obj: { delay?: ValueOrGetter<number> } = {};
 
@@ -130,7 +131,7 @@ describe("toDynamic", () => {
     expect(dv.get()).toBe(100);
   });
 
-  test("bindTo後にプロパティを更新するとget()も更新される", () => {
+  test("メソッドbindTo後にプロパティを更新するとget()も更新される", () => {
     const dv = toDynamic(100);
     const obj: { delay?: ValueOrGetter<number> } = {};
 
@@ -142,8 +143,8 @@ describe("toDynamic", () => {
     expect(dv.source).toBe(200);
   });
 
-  test("プロパティに関数を設定するとget()はその関数を評価する", () => {
-    const dv = toDynamic(100 as ValueOrGetter<number>);
+  test("メソッドbindToでプロパティに関数を設定するとget()はその関数を評価する", () => {
+    const dv = toDynamic<ValueOrGetter<number>>(100);
     const obj: { delay?: ValueOrGetter<number> } = {};
 
     dv.bindTo(obj, "delay");
@@ -156,5 +157,54 @@ describe("toDynamic", () => {
 
     value = 300;
     expect(dv.get()).toBe(300);
+  });
+});
+
+describe("bindTo関数", () => {
+  test("複数のDynamicValueをまとめてバインドできる", () => {
+    const delay = toDynamic(100);
+    const leading = toDynamic(true);
+    const obj = {};
+
+    bindTo(obj, { delay, leading });
+
+    expect(obj.delay).toBe(100);
+    expect(obj.leading).toBe(true);
+  });
+
+  test("バインド後にプロパティを更新するとDynamicValueも更新される", () => {
+    const delay = toDynamic(100);
+    const obj = {};
+
+    bindTo(obj, { delay });
+
+    obj.delay = 200;
+    expect(obj.delay).toBe(200);
+    expect(delay.get()).toBe(200);
+  });
+
+  test("関数をプロパティに設定できる", () => {
+    const delay = toDynamic<ValueOrGetter<number>>(100);
+    const obj = {};
+
+    bindTo(obj, { delay });
+
+    let value = 200;
+    obj.delay = () => value;
+
+    expect(delay.get()).toBe(200);
+
+    value = 300;
+    expect(delay.get()).toBe(300);
+  });
+
+  test("型注釈なしで使用できる", () => {
+    const delay = toDynamic(100);
+    const obj = {};
+
+    bindTo(obj, { delay });
+
+    // 型推論が効いていることを確認
+    expect(obj.delay).toBe(100);
   });
 });

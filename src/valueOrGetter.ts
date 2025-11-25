@@ -65,8 +65,12 @@ export type DynamicValue<T> = {
   set: (newValue: ValueOrGetter<T>) => void;
   /** Get the raw ValueOrGetter (value or function) */
   source: ValueOrGetter<T>;
-  /** Bind this dynamic value to an object property */
-  bindTo: (obj: object, name: string, options?: BindToOptions) => void;
+  /** Bind this dynamic value to an object property and return the object with the new property type */
+  bindTo: <O extends object, K extends string>(
+    obj: O,
+    name: K,
+    options?: BindToOptions,
+  ) => O & Record<K, ValueOrGetter<T>>;
 };
 
 /**
@@ -110,16 +114,59 @@ export function toDynamic<T>(initial: ValueOrGetter<T>): DynamicValue<T> {
     get source() {
       return source;
     },
-    bindTo: (obj: object, name: string, options: BindToOptions = {}) => {
-      const { enumerable = true, configurable = true } = options;
-      Object.defineProperty(obj, name, {
-        get: () => source,
-        set: dynamic.set,
-        enumerable,
-        configurable,
-      });
+    bindTo: (obj, name, options) => {
+      bindTo(
+        obj,
+        { [name]: dynamic } as Record<typeof name, typeof dynamic>,
+        options,
+      );
+      return obj as typeof obj & Record<typeof name, ValueOrGetter<T>>;
     },
   };
 
   return dynamic;
+}
+
+/**
+ * Binds multiple DynamicValues to an object as properties
+ *
+ * Uses Object.defineProperty to create getter/setter pairs that
+ * automatically sync with the DynamicValue instances.
+ *
+ * @typeParam O - The object type to bind to
+ * @typeParam B - The bindings record type
+ * @param obj - The object to bind properties to
+ * @param bindings - Record of property names to DynamicValue instances
+ * @param options - Optional property descriptor options
+ *
+ * @example
+ * ```typescript
+ * const delay = toDynamic(100);
+ * const leading = toDynamic(true);
+ * const obj = {};
+ *
+ * bindTo(obj, { delay, leading });
+ * obj.delay    // => 100
+ * obj.leading  // => true
+ * ```
+ */
+export function bindTo<
+  O extends object,
+  B extends Record<string, DynamicValue<any>>,
+>(
+  obj: O,
+  bindings: B,
+  options: BindToOptions = {},
+): asserts obj is O & {
+  [K in keyof B]: B[K] extends DynamicValue<infer T> ? ValueOrGetter<T> : never;
+} {
+  const { enumerable = true, configurable = true } = options;
+  for (const [name, dynamic] of Object.entries(bindings)) {
+    Object.defineProperty(obj, name, {
+      get: () => dynamic.source,
+      set: (newValue) => dynamic.set(newValue),
+      enumerable,
+      configurable,
+    });
+  }
 }

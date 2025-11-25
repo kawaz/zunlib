@@ -77,43 +77,9 @@ describe("debounce", () => {
     expect(callCount).toBe(1);
   });
 
-  test("delayに関数を渡せる (ValueOrGetter)", async () => {
-    let delay = 50;
-    let callCount = 0;
-    const debounced = debounce(
-      () => callCount++,
-      () => delay,
-    );
-
-    debounced();
-    await new Promise((r) => setTimeout(r, 60));
-    expect(callCount).toBe(1);
-
-    // delayを動的に変更
-    delay = 100;
-    debounced();
-    await new Promise((r) => setTimeout(r, 60));
-    expect(callCount).toBe(1); // まだ呼ばれない
-
-    await new Promise((r) => setTimeout(r, 50));
-    expect(callCount).toBe(2);
-  });
-
-  test("delayプロパティを実行時に変更できる", async () => {
-    let callCount = 0;
-    const debounced = debounce(() => callCount++, 50);
-
+  test("delayプロパティで設定値を確認できる", () => {
+    const debounced = debounce(() => {}, 50);
     expect(debounced.delay).toBe(50);
-
-    debounced.delay = 100;
-    expect(debounced.delay).toBe(100);
-
-    debounced();
-    await new Promise((r) => setTimeout(r, 60));
-    expect(callCount).toBe(0);
-
-    await new Promise((r) => setTimeout(r, 50));
-    expect(callCount).toBe(1);
   });
 
   test("オプションオブジェクトでdelayを指定できる", async () => {

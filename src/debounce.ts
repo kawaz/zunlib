@@ -1,5 +1,3 @@
-import { toDynamic, type ValueOrGetter } from "./valueOrGetter";
-
 /**
  * A debounced function with additional methods
  *
@@ -7,7 +5,7 @@ import { toDynamic, type ValueOrGetter } from "./valueOrGetter";
  */
 type DebouncedFunction<T extends (...args: any[]) => any> = {
   (...args: Parameters<T>): void;
-  delay: ValueOrGetter<number>;
+  delay: number;
   cancel: () => void;
   flush: () => void;
 };
@@ -20,7 +18,7 @@ type DebouncedFunction<T extends (...args: any[]) => any> = {
  *
  * @typeParam T - The function type to debounce
  * @param f - The function to debounce
- * @param opts - Options: delay in ms, function, or options object
+ * @param opts - Options: delay in ms or options object
  * @returns The debounced function with cancel and flush methods
  *
  * @example
@@ -36,41 +34,38 @@ type DebouncedFunction<T extends (...args: any[]) => any> = {
 export function debounce<T extends (...args: any[]) => any>(
   f: T,
   opts:
-    | ValueOrGetter<number>
+    | number
     | {
-        delay: ValueOrGetter<number>;
+        delay: number;
         signal?: AbortSignal;
       } = 100,
 ): DebouncedFunction<T> {
-  opts = typeof opts === "object" ? opts : { delay: opts };
-  const signal = opts?.signal;
-  const delay = toDynamic(opts.delay);
-
+  const { delay, signal } = typeof opts === "number" ? { delay: opts } : opts;
   let timeoutId: ReturnType<typeof setTimeout>;
   let pending = () => {};
-
   const cancel = () => clearTimeout(timeoutId);
   const flush = () => {
     cancel();
     pending();
   };
-
   signal?.addEventListener("abort", cancel);
 
-  const debounced = (...args: Parameters<T>) => {
-    cancel();
-    if (signal?.aborted) return;
-    pending = () => {
+  const debounced: DebouncedFunction<T> = Object.assign(
+    (...args: Parameters<T>) => {
+      cancel();
       if (signal?.aborted) return;
-      f(...args);
-    };
-    timeoutId = setTimeout(pending, delay.get());
-  };
+      pending = () => {
+        if (signal?.aborted) return;
+        f(...args);
+      };
+      timeoutId = setTimeout(pending, debounced.delay);
+    },
+    {
+      delay,
+      cancel,
+      flush,
+    },
+  );
 
-  delay.bindTo(debounced, "delay");
-
-  return Object.assign(debounced, {
-    cancel,
-    flush,
-  }) as DebouncedFunction<T>;
+  return debounced;
 }
