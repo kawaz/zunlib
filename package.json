@@ -48,6 +48,6 @@
     "@biomejs/biome": "^2.3.7",
     "@types/bun": "latest",
     "oxlint": "latest",
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
